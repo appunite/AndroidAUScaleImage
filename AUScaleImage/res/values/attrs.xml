@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="ScaleImageViewOld">
+        <attr name="android:src" />
+    </declare-styleable>
+    <declare-styleable name="ScaleImageView">
+        <attr name="android:src" />
+        <attr name="android:minWidth" />
+        <attr name="android:minHeight" />
+    </declare-styleable>
+</resources>
