@@ -28,6 +28,9 @@ apply plugin: 'maven'
 
 repositories {
     mavenCentral()
+    maven {
+        url "http://192.158.30.128/repository/"
+    }
 }
 
 configurations {
@@ -36,10 +39,10 @@ configurations {
 
 dependencies {
     deployerJars "org.apache.maven.wagon:wagon-ssh:2.2"
-    compile fileTree(dir: 'libs', include: '*.jar')
+    compile "com.appunite:android-support-v4:[7,)"
 }
 
-version = "1.0"
+version = "1.1"
 archivesBaseName = "auscaleimage"
 group = "com.appunite"
 
