@@ -215,6 +215,11 @@ public class ScaleImageView extends View {
             }
 
             @Override
+            public boolean onSingleTapConfirmed(MotionEvent e) {
+                return performClick();
+            }
+
+                    @Override
             public boolean onDoubleTap(MotionEvent e) {
                 mZoomer.forceFinished(true);
                 mZoomStartScale = mScale;
@@ -654,7 +659,6 @@ public class ScaleImageView extends View {
             ViewCompat.postInvalidateOnAnimation(this);
         }
     }
-
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     //

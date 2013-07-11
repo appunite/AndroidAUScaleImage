@@ -16,20 +16,23 @@
 
 package com.example.examplescroll;
 
+import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentActivity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
 import com.appunite.imageloader.RemoteImageLoader;
 import com.appunite.scroll.ScaleImageView;
 
-public class ImageFragment extends Fragment {
+public class ImageFragment extends Fragment implements View.OnClickListener {
     private static final String ARG_IMAGE = "image";
     private String mImageUrl;
     private ScaleImageView mImageView;
@@ -60,6 +63,7 @@ public class ImageFragment extends Fragment {
         mProgress = view.findViewById(android.R.id.progress);
         mImageView = (ScaleImageView) view.findViewById(android.R.id.icon);
         mImageView.setAllowParentHorizontalScroll(true);
+        mImageView.setOnClickListener(this);
 
         final RemoteImageLoader.ImageHolder imageHolder = new RemoteImageLoader.ImageHolder() {
 
@@ -90,5 +94,18 @@ public class ImageFragment extends Fragment {
         remoteImageLoader.loadImage(imageHolder, mImageUrl);
 
         return view;
+    }
+
+    @Override
+    public void onClick(View view) {
+        final int viewId = view.getId();
+        switch (viewId) {
+            case android.R.id.icon:
+                final Context context = getActivity();
+                Toast.makeText(context, R.string.clicked, Toast.LENGTH_SHORT).show();
+                return;
+            default:
+                throw new RuntimeException("Unknown view clicked: " + viewId);
+        }
     }
 }

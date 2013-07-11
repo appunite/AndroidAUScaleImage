@@ -3,5 +3,6 @@
 
     <string name="app_name">AUScrollImage</string>
     <string name="loading">Loading…</string>
+    <string name="clicked">Clicked</string>
 
 </resources>
