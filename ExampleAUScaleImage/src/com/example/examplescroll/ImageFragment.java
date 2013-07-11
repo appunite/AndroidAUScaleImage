@@ -33,6 +33,7 @@ public class ImageFragment extends Fragment {
     private static final String ARG_IMAGE = "image";
     private String mImageUrl;
     private ScaleImageView mImageView;
+    private View mProgress;
 
     public static Fragment newInstance(String image) {
         Bundle args = new Bundle();
@@ -56,31 +57,34 @@ public class ImageFragment extends Fragment {
         final RemoteImageLoader remoteImageLoader = activity.getFullRemoteImageLoader();
         final View view = inflater.inflate(R.layout.image_fragment, container, false);
         assert view != null;
+        mProgress = view.findViewById(android.R.id.progress);
         mImageView = (ScaleImageView) view.findViewById(android.R.id.icon);
         mImageView.setAllowParentHorizontalScroll(true);
 
-        final Resources resources = activity.getResources();
-        final Drawable placeholderDrawable = resources.getDrawable(R.drawable.ic_send);
-        final Drawable failDrawable = resources.getDrawable(R.drawable.img_thumb_error);
         final RemoteImageLoader.ImageHolder imageHolder = new RemoteImageLoader.ImageHolder() {
 
             @Override
             public void setRemoteBitmap(Bitmap bitmap, boolean b) {
                 if (bitmap == null) {
-                    mImageView.setSrcDrawable(null);
+                    mImageView.setSrcBitmap(null);
                 } else {
-                    mImageView.setSrcDrawable(new BitmapDrawable(resources, bitmap));
+                    mImageView.setSrcBitmap(bitmap);
                 }
+                mProgress.setVisibility(View.GONE);
+                mImageView.setVisibility(View.VISIBLE);
             }
 
             @Override
             public void failDownloading(boolean b) {
-                mImageView.setSrcDrawable(failDrawable);
+                mImageView.setSrcResource(R.drawable.img_thumb_error);
+                mProgress.setVisibility(View.GONE);
+                mImageView.setVisibility(View.VISIBLE);
             }
 
             @Override
             public void setPlaceholder(boolean b) {
-                mImageView.setSrcDrawable(placeholderDrawable);
+                mProgress.setVisibility(View.VISIBLE);
+                mImageView.setVisibility(View.GONE);
             }
         };
         remoteImageLoader.loadImage(imageHolder, mImageUrl);

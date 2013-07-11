@@ -18,12 +18,15 @@
 package com.appunite.scroll;
 
 import android.content.Context;
+import android.content.res.Resources;
 import android.content.res.TypedArray;
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Point;
 import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.RectF;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Parcel;
 import android.os.Parcelable;
@@ -241,23 +244,25 @@ public class ScaleImageView extends View {
 
                 disallowParentInterceptWhenOnEdge(distanceX, distanceY);
 
-                if (canScrollX && scrolledX < 0) {
-                    mEdgeEffectLeft.onPull(scrolledX / (float) mContentRect.width());
-                    mEdgeEffectLeftActive = true;
-                }
-                if (canScrollY && scrolledY < 0) {
-                    mEdgeEffectTop.onPull(scrolledY / (float) mContentRect.height());
-                    mEdgeEffectTopActive = true;
-                }
-                if (canScrollX && scrolledX > mMaxScrollBuffer.x) {
-                    mEdgeEffectRight.onPull((scrolledX - mMaxScrollBuffer.x)
-                            / (float) mContentRect.width());
-                    mEdgeEffectRightActive = true;
-                }
-                if (canScrollY && scrolledY > mMaxScrollBuffer.y) {
-                    mEdgeEffectBottom.onPull((scrolledY - mMaxScrollBuffer.y)
-                            / (float) mContentRect.height());
-                    mEdgeEffectBottomActive = true;
+                if (mScale > mMinScale) {
+                    if (canScrollX && scrolledX < 0) {
+                        mEdgeEffectLeft.onPull(scrolledX / (float) mContentRect.width());
+                        mEdgeEffectLeftActive = true;
+                    }
+                    if (canScrollY && scrolledY < 0) {
+                        mEdgeEffectTop.onPull(scrolledY / (float) mContentRect.height());
+                        mEdgeEffectTopActive = true;
+                    }
+                    if (canScrollX && scrolledX > mMaxScrollBuffer.x) {
+                        mEdgeEffectRight.onPull((scrolledX - mMaxScrollBuffer.x)
+                                / (float) mContentRect.width());
+                        mEdgeEffectRightActive = true;
+                    }
+                    if (canScrollY && scrolledY > mMaxScrollBuffer.y) {
+                        mEdgeEffectBottom.onPull((scrolledY - mMaxScrollBuffer.y)
+                                / (float) mContentRect.height());
+                        mEdgeEffectBottomActive = true;
+                    }
                 }
 
                 ViewCompat.postInvalidateOnAnimation(ScaleImageView.this);
@@ -338,6 +343,11 @@ public class ScaleImageView extends View {
                 getPaddingTop(),
                 getWidth() - getPaddingRight(),
                 getHeight() - getPaddingBottom());
+        if (w != oldw || h != oldh) {
+            setupImage();
+            validateScale();
+            validateTranslation();
+        }
     }
 
     @Override
@@ -594,36 +604,38 @@ public class ScaleImageView extends View {
             boolean canScrollY = mRectF.top > mContentRect.top ||
                     mRectF.bottom < mContentRect.bottom;
 
-            if (canScrollX
-                    && currX < 0
-                    && mEdgeEffectLeft.isFinished()
-                    && !mEdgeEffectLeftActive) {
-                mEdgeEffectLeft.onAbsorb((int) OverScrollerCompat.getCurrVelocity(mScroller));
-                mEdgeEffectLeftActive = true;
-                needsInvalidate = true;
-            } else if (canScrollX
-                    && currX > mMaxScrollBuffer.x
-                    && mEdgeEffectRight.isFinished()
-                    && !mEdgeEffectRightActive) {
-                mEdgeEffectRight.onAbsorb((int) OverScrollerCompat.getCurrVelocity(mScroller));
-                mEdgeEffectRightActive = true;
-                needsInvalidate = true;
-            }
+            if (mScale > mMinScale) {
+                if (canScrollX
+                        && currX < 0
+                        && mEdgeEffectLeft.isFinished()
+                        && !mEdgeEffectLeftActive) {
+                    mEdgeEffectLeft.onAbsorb((int) OverScrollerCompat.getCurrVelocity(mScroller));
+                    mEdgeEffectLeftActive = true;
+                    needsInvalidate = true;
+                } else if (canScrollX
+                        && currX > mMaxScrollBuffer.x
+                        && mEdgeEffectRight.isFinished()
+                        && !mEdgeEffectRightActive) {
+                    mEdgeEffectRight.onAbsorb((int) OverScrollerCompat.getCurrVelocity(mScroller));
+                    mEdgeEffectRightActive = true;
+                    needsInvalidate = true;
+                }
 
-            if (canScrollY
-                    && currY < 0
-                    && mEdgeEffectTop.isFinished()
-                    && !mEdgeEffectTopActive) {
-                mEdgeEffectTop.onAbsorb((int) OverScrollerCompat.getCurrVelocity(mScroller));
-                mEdgeEffectTopActive = true;
-                needsInvalidate = true;
-            } else if (canScrollY
-                    && currY > mMaxScrollBuffer.y
-                    && mEdgeEffectBottom.isFinished()
-                    && !mEdgeEffectBottomActive) {
-                mEdgeEffectBottom.onAbsorb((int) OverScrollerCompat.getCurrVelocity(mScroller));
-                mEdgeEffectBottomActive = true;
-                needsInvalidate = true;
+                if (canScrollY
+                        && currY < 0
+                        && mEdgeEffectTop.isFinished()
+                        && !mEdgeEffectTopActive) {
+                    mEdgeEffectTop.onAbsorb((int) OverScrollerCompat.getCurrVelocity(mScroller));
+                    mEdgeEffectTopActive = true;
+                    needsInvalidate = true;
+                } else if (canScrollY
+                        && currY > mMaxScrollBuffer.y
+                        && mEdgeEffectBottom.isFinished()
+                        && !mEdgeEffectBottomActive) {
+                    mEdgeEffectBottom.onAbsorb((int) OverScrollerCompat.getCurrVelocity(mScroller));
+                    mEdgeEffectBottomActive = true;
+                    needsInvalidate = true;
+                }
             }
 
             validateTranslation();
@@ -773,12 +785,44 @@ public class ScaleImageView extends View {
      * Set image drawable
      * @param drawable set image to display
      */
+    @SuppressWarnings("UnusedDeclaration")
     public void setSrcDrawable(Drawable drawable) {
         this.mSrc = drawable;
         if (mSrc != null) {
             setupImage();
+            mScale = mMinScale;
         }
         resetTranslateScale();
+    }
+
+    /**
+     * Set image drawable
+     * @param drawable set image to display
+     */
+    @SuppressWarnings("UnusedDeclaration")
+    public void setSrcResource(int drawable) {
+        if (drawable == 0) {
+            setSrcDrawable(null);
+            return;
+        }
+        final Resources resources = getResources();
+        assert resources != null;
+        setSrcDrawable(resources.getDrawable(drawable));
+    }
+
+    /**
+     * Set image drawable
+     * @param bitmap set image to display
+     */
+    @SuppressWarnings("UnusedDeclaration")
+    public void setSrcBitmap(Bitmap bitmap) {
+        if (bitmap == null) {
+            setSrcDrawable(null);
+            return;
+        }
+        final Resources resources = getResources();
+        assert resources != null;
+        setSrcDrawable(new BitmapDrawable(resources, bitmap));
     }
 
 

@@ -1,6 +1,36 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.appunite.scroll.ScaleImageView xmlns:android="http://schemas.android.com/apk/res/android"
-                                    android:id="@android:id/icon"
-                                    android:layout_width="match_parent"
-                                    android:src="@drawable/ic_launcher_web"
-                                    android:layout_height="match_parent"/>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+             android:layout_width="match_parent"
+             android:layout_height="match_parent">
+
+    <com.appunite.scroll.ScaleImageView
+            android:id="@android:id/icon"
+            android:layout_width="match_parent"
+            android:src="@drawable/ic_launcher_web"
+            android:layout_height="match_parent"/>
+
+    <LinearLayout
+            android:id="@android:id/progress"
+            android:layout_gravity="center"
+            android:layout_width="wrap_content"
+            android:orientation="horizontal"
+            android:layout_height="wrap_content">
+
+        <ProgressBar
+                android:layout_gravity="center_vertical|right"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                style="?android:attr/progressBarStyleSmall"/>
+
+        <TextView
+                android:layout_marginLeft="4dp"
+                android:layout_gravity="center_vertical|left"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#ffaaaaaa"
+                android:textSize="12sp"
+                android:text="@string/loading"/>
+
+
+    </LinearLayout>
+</FrameLayout>

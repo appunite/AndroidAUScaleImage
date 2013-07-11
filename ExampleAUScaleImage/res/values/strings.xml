@@ -2,5 +2,6 @@
 <resources>
 
     <string name="app_name">AUScrollImage</string>
+    <string name="loading">Loading…</string>
 
 </resources>
