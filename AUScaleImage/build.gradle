@@ -42,7 +42,7 @@ dependencies {
     compile "com.appunite:android-support-v4:[7,)"
 }
 
-version = "1.3"
+version = "1.3.1"
 archivesBaseName = "auscaleimage"
 group = "com.appunite"
 

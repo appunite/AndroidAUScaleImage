@@ -33,7 +33,7 @@ repositories {
 
 dependencies {
     compile project(":AUScaleImage")
-    //compile "com.appunite:auscaleimage:1.3"
+    //compile "com.appunite:auscaleimage:1.3.1"
     compile "com.appunite:auremoteimageloader:2.1"
     compile "com.appunite:android-support-v4:[7,)"
 }

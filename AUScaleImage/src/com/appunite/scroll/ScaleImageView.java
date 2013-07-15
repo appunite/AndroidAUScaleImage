@@ -348,10 +348,12 @@ public class ScaleImageView extends View {
                 getPaddingTop(),
                 getWidth() - getPaddingRight(),
                 getHeight() - getPaddingBottom());
-        if (w != oldw || h != oldh) {
-            setupImage();
-            validateScale();
-            validateTranslation();
+        if (mSrc != null) {
+            if (w != oldw || h != oldh) {
+                setupImage();
+                validateScale();
+                validateTranslation();
+            }
         }
     }
 
