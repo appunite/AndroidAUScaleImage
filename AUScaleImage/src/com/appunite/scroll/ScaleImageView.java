@@ -78,6 +78,20 @@ import android.widget.OverScroller;
 public class ScaleImageView extends View {
     private static final String TAG = "InteractiveLineGraphView";
 
+    // vertical
+    public static final int ALIGN_TOP = 1 << 0;
+    public static final int ALIGN_BOTTOM = 1 << 1;
+    public static final int ALIGN_CENTER_VERTICAL = 1 << 2;
+
+    private static final int VERTICAL_MASK = ALIGN_TOP | ALIGN_BOTTOM | ALIGN_CENTER_VERTICAL;
+
+    // horizontal
+    public static final int ALIGN_LEFT = 1 << 3;
+    public static final int ALIGN_RIGHT = 1 << 4;
+    public static final int ALIGN_CENTER_HORIZONTAL = 1 << 5;
+
+    private static final int HORIZONTAL_MASK = ALIGN_LEFT | ALIGN_RIGHT | ALIGN_CENTER_HORIZONTAL;
+
     /**
      * Initial fling velocity for pan operations, in screen widths (or heights) per second.
      *
@@ -142,6 +156,9 @@ public class ScaleImageView extends View {
     private RectF mRectF = new RectF();
     private float mZoomStartScale;
     private float mMinEdge;
+
+    private int mUsedAlignType;
+    private int mAlignType = ALIGN_CENTER_HORIZONTAL | ALIGN_CENTER_VERTICAL;
 
     @SuppressWarnings("UnusedDeclaration")
     public ScaleImageView(Context context) {
@@ -232,7 +249,6 @@ public class ScaleImageView extends View {
             @Override
             public boolean onScroll(MotionEvent e1, MotionEvent e2,
                                     float distanceX, float distanceY) {
-
                 getRealTranslation(mTranslation, mRealTranslation);
                 mRealTranslation.offset(-distanceX, -distanceY);
                 getTranslation(mRealTranslation, mTranslation);
@@ -375,29 +391,83 @@ public class ScaleImageView extends View {
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
     private void setupImage() {
+        final float scaleWidth = (float)mContentRect.width() / mSrc.getIntrinsicWidth();
+        final float scaleHeight = (float)mContentRect.height() / mSrc.getIntrinsicHeight();
+        if(scaleWidth > scaleHeight){
+            mMinScale = scaleHeight;
+            mUsedAlignType = mAlignType & HORIZONTAL_MASK;
+        } else {
+            mMinScale = scaleWidth;
+            mUsedAlignType = mAlignType & VERTICAL_MASK;
+        }
+
         final int intrinsicWidth2 = mSrc.getIntrinsicWidth() / 2;
         final int intrinsicHeight2 = mSrc.getIntrinsicHeight() / 2;
-        mSrcRect.set(-intrinsicWidth2, -intrinsicHeight2, intrinsicWidth2, intrinsicHeight2);
-        mSrc.setBounds(mSrcRect);
-        mTranslation.set(0.5f, 0.5f);
 
-        final float scaleWidth = (float)mContentRect.width() / mSrcRect.width();
-        final float scaleHeight = (float)mContentRect.height() / mSrcRect.height();
-        mMinScale = scaleWidth > scaleHeight ? scaleHeight : scaleWidth;
+        if(mUsedAlignType == ALIGN_BOTTOM){
+            mSrcRect.set(-intrinsicWidth2, -mSrc.getIntrinsicHeight(), intrinsicWidth2, 0);
+            mTranslation.set(0.5f, 1f);
+        } else if(mUsedAlignType == ALIGN_TOP){
+            mSrcRect.set(-intrinsicWidth2, 0, intrinsicWidth2, mSrc.getIntrinsicHeight());
+            mTranslation.set(0.5f, 0f);
+        } else if(mUsedAlignType == ALIGN_CENTER_VERTICAL || mUsedAlignType == ALIGN_CENTER_HORIZONTAL){
+            mSrcRect.set(-intrinsicWidth2, -intrinsicHeight2, intrinsicWidth2, intrinsicHeight2);
+            mTranslation.set(0.5f, 0.5f);
+        } else if(mUsedAlignType == ALIGN_LEFT){
+            mSrcRect.set(0, -intrinsicHeight2, mSrc.getIntrinsicWidth(), intrinsicHeight2);
+            mTranslation.set(1f, 0.5f);
+        } else if(mUsedAlignType == ALIGN_RIGHT){
+            mSrcRect.set(-mSrc.getIntrinsicWidth(), -intrinsicHeight2, 0, intrinsicHeight2);
+            mTranslation.set(0f, 0.5f);
+        }
+
+        mSrc.setBounds(mSrcRect);
     }
 
     private void getImageRect(RectF rect) {
         rect.set(mSrcRect);
-        final float width2 = Math.max(mSrcRect.width() * mScale, mContentRect.width()) / 2.0f;
-        final float height2 = Math.max(mSrcRect.height() * mScale, mContentRect.height()) / 2.0f;
-        rect.set(-width2, -height2, width2, height2);
+        final float width = Math.max(mSrcRect.width() * mScale, mContentRect.width());
+        final float height = Math.max(mSrcRect.height() * mScale, mContentRect.height());
+
+        final float width2 = width / 2;
+        final float height2 = height / 2;
+
+        if(mUsedAlignType == ALIGN_BOTTOM){
+            rect.set(-width2, -height, width2, 0);
+        } else if(mUsedAlignType == ALIGN_TOP){
+            rect.set(-width2, 0, width2, height);
+        } else if(mUsedAlignType == ALIGN_CENTER_VERTICAL || mUsedAlignType == ALIGN_CENTER_HORIZONTAL){
+            rect.set(-width2, -height2, width2, height2);
+        } else if(mUsedAlignType == ALIGN_LEFT){
+            rect.set(0, -height2, width, height2);
+        } else if(mUsedAlignType == ALIGN_RIGHT){
+            rect.set(- width, -height2, 0, height2);
+        }
         getRealTranslation(mTranslation, mRealTranslation);
         rect.offset(mRealTranslation.x, mRealTranslation.y);
     }
 
     private void setTranslationFromScroll(float scrollX, float scrollY) {
-        float centerX = mScale * mSrcRect.width() / 2.0f - scrollX;
-        float centerY = mScale * mSrcRect.height() / 2.0f - scrollY;
+        float centerX = 0;
+        float centerY = 0;
+
+        if(mUsedAlignType == ALIGN_BOTTOM){
+            centerX = mScale * mSrcRect.width() / 2.0f - scrollX;
+            centerY = mScale * mSrcRect.height() - scrollY;
+        } else if(mUsedAlignType == ALIGN_TOP){
+            centerX = mScale * mSrcRect.width() / 2.0f - scrollX;
+            centerY = - scrollY;
+        } else if(mUsedAlignType == ALIGN_CENTER_VERTICAL || mUsedAlignType == ALIGN_CENTER_HORIZONTAL){
+            centerX = mScale * mSrcRect.width() / 2.0f - scrollX;
+            centerY = mScale * mSrcRect.height() / 2.0f - scrollY;
+        } else if(mUsedAlignType == ALIGN_LEFT){
+            centerX = - scrollX;
+            centerY = mScale * mSrcRect.height() / 2.0f - scrollY;
+        } else if(mUsedAlignType == ALIGN_RIGHT){
+            centerX = mScale * mSrcRect.width() - scrollX;
+            centerY = mScale * mSrcRect.height() / 2.0f - scrollY;
+        }
+
         mRealTranslation.set(centerX, centerY);
         getTranslation(mRealTranslation, mTranslation);
     }
@@ -424,7 +494,6 @@ public class ScaleImageView extends View {
             mRectF.left = mContentRect.right - width;
             valid = false;
         }
-
         if (mRectF.top > mContentRect.top) {
             final float height = mRectF.height();
             mRectF.top = mContentRect.top;
@@ -436,7 +505,19 @@ public class ScaleImageView extends View {
             mRectF.top = mContentRect.bottom - height;
             valid = false;
         }
-        mRealTranslation.set(mRectF.centerX(), mRectF.centerY());
+
+        if(mUsedAlignType == ALIGN_BOTTOM){
+            mRealTranslation.set(mRectF.centerX(), mRectF.bottom);
+        } else if(mUsedAlignType == ALIGN_TOP){
+            mRealTranslation.set(mRectF.centerX(), mRectF.top);
+        } else if(mUsedAlignType == ALIGN_CENTER_VERTICAL || mUsedAlignType == ALIGN_CENTER_HORIZONTAL){
+            mRealTranslation.set(mRectF.centerX(), mRectF.centerY());
+        } else if(mUsedAlignType == ALIGN_LEFT){
+            mRealTranslation.set(mRectF.left, mRectF.centerY());
+        } else if(mUsedAlignType == ALIGN_RIGHT){
+            mRealTranslation.set(mRectF.right, mRectF.centerY());
+        }
+
         getTranslation(mRealTranslation, mTranslation);
         return valid;
     }
@@ -585,8 +666,8 @@ public class ScaleImageView extends View {
     }
 
     private void computeMaxScrollSize(Point out) {
-        out.set((int)(mScale  * mSrcRect.width() - mContentRect.width()),
-                (int)(mScale*mSrcRect.height() - mContentRect.height()));
+        out.set((int)(mScale * mSrcRect.width() - mContentRect.width()),
+                (int)(mScale * mSrcRect.height() - mContentRect.height()));
     }
 
     @Override
@@ -914,6 +995,21 @@ public class ScaleImageView extends View {
             translation = new PointF(in.readFloat(), in.readFloat());
             minScale = in.readFloat();
             scale = in.readFloat();
+        }
+    }
+
+    public void setAlignType(int alignType){
+        if ((alignType & HORIZONTAL_MASK) == 0) {
+            alignType |= ALIGN_CENTER_HORIZONTAL;
+        }
+        if ((alignType & VERTICAL_MASK) == 0) {
+            alignType |= ALIGN_CENTER_VERTICAL;
+        }
+
+        mAlignType = alignType;
+
+        if((mUsedAlignType & alignType) == 0){
+            invalidate();
         }
     }
 

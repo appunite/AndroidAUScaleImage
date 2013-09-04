@@ -63,6 +63,8 @@ public class ImageFragment extends Fragment implements View.OnClickListener {
         mProgress = view.findViewById(android.R.id.progress);
         mImageView = (ScaleImageView) view.findViewById(android.R.id.icon);
         mImageView.setAllowParentHorizontalScroll(true);
+        mImageView.setAlignType(ScaleImageView.ALIGN_CENTER_HORIZONTAL |
+                ScaleImageView.ALIGN_CENTER_VERTICAL);
         mImageView.setOnClickListener(this);
 
         final RemoteImageLoader.ImageHolder imageHolder = new RemoteImageLoader.ImageHolder() {
