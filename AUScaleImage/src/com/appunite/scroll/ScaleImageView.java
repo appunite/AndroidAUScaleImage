@@ -160,6 +160,17 @@ public class ScaleImageView extends View {
     private int mUsedAlignType;
     private int mAlignType = ALIGN_CENTER_HORIZONTAL | ALIGN_CENTER_VERTICAL;
 
+    // internal margins
+    private int mMarginTop    = 0;
+    private int mMarginBottom = 0;
+    private int mMarginLeft   = 0;
+    private int mMarginRight  = 0;
+
+    private int mAbsoluteMarginTop    = 0;
+    private int mAbsoluteMarginBottom = 0;
+    private int mAbsoluteMarginLeft   = 0;
+    private int mAbsoluteMarginRight  = 0;
+
     @SuppressWarnings("UnusedDeclaration")
     public ScaleImageView(Context context) {
         this(context, null, 0);
@@ -391,8 +402,10 @@ public class ScaleImageView extends View {
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
     private void setupImage() {
-        final float scaleWidth = (float)mContentRect.width() / mSrc.getIntrinsicWidth();
-        final float scaleHeight = (float)mContentRect.height() / mSrc.getIntrinsicHeight();
+        verifyInternalMargins();
+
+        final float scaleWidth = (float)(mContentRect.width() - mMarginRight - mMarginLeft) / mSrc.getIntrinsicWidth();
+        final float scaleHeight = (float)(mContentRect.height() - mMarginTop - mMarginBottom) / mSrc.getIntrinsicHeight();
         if(scaleWidth > scaleHeight){
             mMinScale = scaleHeight;
             mUsedAlignType = mAlignType & HORIZONTAL_MASK;
@@ -426,8 +439,8 @@ public class ScaleImageView extends View {
 
     private void getImageRect(RectF rect) {
         rect.set(mSrcRect);
-        final float width = Math.max(mSrcRect.width() * mScale, mContentRect.width());
-        final float height = Math.max(mSrcRect.height() * mScale, mContentRect.height());
+        final float width = Math.max(mSrcRect.width() * mScale, mContentRect.width() - mMarginLeft - mMarginRight);
+        final float height = Math.max(mSrcRect.height() * mScale, mContentRect.height() - mMarginTop - mMarginBottom);
 
         final float width2 = width / 2;
         final float height2 = height / 2;
@@ -483,26 +496,32 @@ public class ScaleImageView extends View {
     private boolean validateTranslation() {
         getImageRect(mRectF);
         boolean valid = true;
-        if (mRectF.left > mContentRect.left) {
+
+        int contentLeft = mContentRect.left + mMarginLeft;
+        int contentRight = mContentRect.right - mMarginRight;
+        int contentTop = mContentRect.top + mMarginTop;
+        int contentBottom = mContentRect.bottom - mMarginBottom;
+
+        if (mRectF.left > contentLeft) {
             final float width = mRectF.width();
-            mRectF.left = mContentRect.left;
-            mRectF.right = mContentRect.left + width;
+            mRectF.left = contentLeft;
+            mRectF.right = contentLeft + width;
             valid = false;
-        } else if (mRectF.right < mContentRect.right) {
+        } else if (mRectF.right < contentRight) {
             final float width = mRectF.width();
-            mRectF.right = mContentRect.right;
-            mRectF.left = mContentRect.right - width;
+            mRectF.right = contentRight;
+            mRectF.left = contentRight - width;
             valid = false;
         }
-        if (mRectF.top > mContentRect.top) {
+        if (mRectF.top > contentTop) {
             final float height = mRectF.height();
-            mRectF.top = mContentRect.top;
-            mRectF.bottom = mContentRect.top + height;
+            mRectF.top = contentTop;
+            mRectF.bottom = contentTop + height;
             valid = false;
-        } else if (mRectF.bottom < mContentRect.bottom) {
+        } else if (mRectF.bottom < contentBottom) {
             final float height = mRectF.height();
-            mRectF.bottom = mContentRect.bottom;
-            mRectF.top = mContentRect.bottom - height;
+            mRectF.bottom = contentBottom;
+            mRectF.top = contentBottom - height;
             valid = false;
         }
 
@@ -658,8 +677,8 @@ public class ScaleImageView extends View {
                 startY,
                 velocityX,
                 velocityY,
-                0, mMaxScrollBuffer.x,
-                0, mMaxScrollBuffer.y,
+                -mMarginLeft, mMaxScrollBuffer.x + mMarginRight,
+                -mMarginTop, mMaxScrollBuffer.y + mMarginBottom,
                 mContentRect.width() / 2,
                 mContentRect.height() / 2);
         ViewCompat.postInvalidateOnAnimation(this);
@@ -1013,4 +1032,44 @@ public class ScaleImageView extends View {
         }
     }
 
+    /**
+     * Sets internal margins. Parameters values in px.
+     */
+    public void setInternalMargins(int left, int top, int right, int bottom){
+        mAbsoluteMarginLeft = left;
+        mAbsoluteMarginTop = top;
+        mAbsoluteMarginRight = right;
+        mAbsoluteMarginBottom = bottom;
+        invalidate();
+    }
+
+    private void verifyInternalMargins() {
+        final float preScaleWidth = (float)mContentRect.width() / mSrc.getIntrinsicWidth();
+        final float preScaleHeight = (float)mContentRect.height() / mSrc.getIntrinsicHeight();
+        if(preScaleWidth > preScaleHeight){
+            int alignType = mAlignType & HORIZONTAL_MASK;
+            int scaledSize = (int) (preScaleHeight * mSrc.getIntrinsicWidth());
+            int preSetMargin = mContentRect.width() - scaledSize;
+            if(alignType == ALIGN_CENTER_HORIZONTAL){
+                mMarginLeft = Math.max(mAbsoluteMarginLeft - preSetMargin / 2, 0);
+                mMarginRight = Math.max(mAbsoluteMarginRight - preSetMargin / 2, 0);
+            } else if(alignType == ALIGN_LEFT){
+                mMarginRight = Math.max(mAbsoluteMarginRight - preSetMargin, 0);
+            } else if(alignType == ALIGN_RIGHT){
+                mMarginLeft = Math.max(mAbsoluteMarginLeft - preSetMargin, 0);
+            }
+        } else {
+            int alignType = mAlignType & VERTICAL_MASK;
+            int scaledSize = (int) (preScaleWidth * mSrc.getIntrinsicHeight());
+            int preSetMargin = mContentRect.height() - scaledSize;
+            if(alignType == ALIGN_CENTER_VERTICAL){
+                mMarginTop = Math.max(mAbsoluteMarginTop - preSetMargin / 2, 0);
+                mMarginBottom = Math.max(mAbsoluteMarginBottom - preSetMargin / 2, 0);
+            } else if(alignType == ALIGN_TOP){
+                mMarginBottom = Math.max(mAbsoluteMarginBottom - preSetMargin, 0);
+            } else if(alignType == ALIGN_BOTTOM){
+                mMarginTop = Math.max(mAbsoluteMarginTop - preSetMargin, 0);
+            }
+        }
+    }
 }
