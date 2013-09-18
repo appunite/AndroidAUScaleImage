@@ -41,7 +41,7 @@ dependencies {
 }
 
 
-def baseVersionName = "1.4"
+def baseVersionName = "1.4.1"
 if (project.hasProperty("versionSuffix")) {
     project.ext.versionSuffix = project.versionSuffix
 } else {

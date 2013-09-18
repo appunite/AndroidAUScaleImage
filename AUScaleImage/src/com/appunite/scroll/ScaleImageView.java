@@ -773,7 +773,17 @@ public class ScaleImageView extends View {
      */
     public void resetTranslateScale() {
         mScale = mMinScale;
-        mTranslation.set(0.5f, 0.5f);
+        if(mUsedAlignType == ALIGN_BOTTOM){
+            mTranslation.set(0.5f, 1f);
+        } else if(mUsedAlignType == ALIGN_TOP){
+            mTranslation.set(0.5f, 0f);
+        } else if(mUsedAlignType == ALIGN_CENTER_VERTICAL || mUsedAlignType == ALIGN_CENTER_HORIZONTAL){
+            mTranslation.set(0.5f, 0.5f);
+        } else if(mUsedAlignType == ALIGN_LEFT){
+            mTranslation.set(1f, 0.5f);
+        } else if(mUsedAlignType == ALIGN_RIGHT){
+            mTranslation.set(0f, 0.5f);
+        }
         invalidate();
     }
 
